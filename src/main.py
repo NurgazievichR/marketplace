@@ -2,8 +2,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
-from src.database import engine
-
+from database.engine import engine
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
