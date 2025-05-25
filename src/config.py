@@ -17,3 +17,4 @@ class Settings(BaseSettings):
                 f'{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}@'
                 f'{self.POSTGRES_HOST}/{self.POSTGRES_DB}')
 
+settings = Settings()
