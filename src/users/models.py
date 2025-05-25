@@ -9,3 +9,4 @@ class User(Base):
     username: Mapped[str] = mapped_column(String(64), unique=True, nullable=False)
     email: Mapped[str] = mapped_column(String(256), unique=True, nullable=False)
     password: Mapped[str] = mapped_column(String(256), nullable=False)
+    
