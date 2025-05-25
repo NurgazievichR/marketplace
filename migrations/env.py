@@ -6,6 +6,8 @@ from sqlalchemy.ext.asyncio import create_async_engine
 from src.config import settings
 from src.database.base import Base
 
+from src.users.models import User
+
 target_metadata = Base.metadata
 
 def do_run_migrations(connection):
