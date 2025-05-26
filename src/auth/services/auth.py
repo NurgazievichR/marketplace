@@ -5,7 +5,7 @@ from sqlalchemy import select
 from jose import jwt
 from datetime import datetime, timezone, timedelta
 
-from src.auth.schemas import UserRegister, TokenPair
+from src.auth.schemas import UserRegister, LoginForm, TokenPair
 from src.users.models import User
 from src.config import settings
 
@@ -24,8 +24,8 @@ async def create_user(user_data: UserRegister, db_session: AsyncSession) -> User
     await user.save(db_session)
     return user
     
-async def authenticate_user(user_data: UserRegister, db_session: AsyncSession) -> User:
-    stmt = select(User).where(User.username == user_data.username)
+async def authenticate_user(user_data: LoginForm, db_session: AsyncSession) -> User:
+    stmt = select(User).where(User.email == user_data.email)
     result = await db_session.execute(stmt)
     user = result.scalar_one_or_none()
     if not user:
