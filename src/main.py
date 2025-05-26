@@ -6,6 +6,7 @@ from src.database.engine import engine
 from src.redis import get_redis
 
 from src.auth.routers import router as auth_router
+from src.users.routers import router as users_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -21,4 +22,6 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title='MarketPlace API', lifespan=lifespan)
 app.include_router(auth_router)
+app.include_router(users_router)
+
 

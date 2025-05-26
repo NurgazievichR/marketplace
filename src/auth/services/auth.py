@@ -1,8 +1,10 @@
-from fastapi import HTTPException
+from fastapi import HTTPException, Request
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from passlib.context import CryptContext
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from jose import jwt
+from jose.exceptions import ExpiredSignatureError, JWTClaimsError, JWTError
 from datetime import datetime, timezone, timedelta
 import redis.asyncio as redis
 import json
@@ -19,31 +21,49 @@ def hash_password(password: str) -> str:
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     return pwd_context.verify(plain_password, hashed_password)
 
+def get_payload(token: str):
+    try:
+        payload = jwt.decode(token, settings.JWT_SECRET, algorithms=[settings.JWT_ALGORITHM])
+    except ExpiredSignatureError:
+        raise HTTPException(status_code=401, detail="Token has expired")
+    except JWTClaimsError:
+        raise HTTPException(status_code=401, detail="Invalid token claims")
+    except JWTError:
+        raise HTTPException(status_code=401, detail="Invalid token")
+
+class AuthBearer(HTTPBearer):
+    def __init__(self, auto_error: bool = True):
+        super().__init__(auto_error=auto_error)
+
+    async def __call__(self, request: Request):
+        credentials: HTTPAuthorizationCredentials = await super().__call__(request)
+
+        if not credentials or credentials.scheme.lower() != "bearer":
+            raise HTTPException(status_code=403, detail="Invalid auth scheme.")
+
+        token = credentials.credentials
+
+        payload = get_payload(token)
+
+async def get_user(id: str, db_session: AsyncSession) -> User:
+    stmt = select(User).where(User.id == id)
+    result = await db_session.execute(stmt)
+    user = result.scalar_one_or_none()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
 async def create_user(user_data: UserRegisterSchema, db_session: AsyncSession) -> User:
     hashed_password = hash_password(user_data.password)
     user_dict = user_data.model_dump(exclude={'password', 'confirm_password'})
     user: User = User(**user_dict, password=hashed_password)
     await user.save(db_session)
     return user
-    
+
 async def authenticate_user(user_data: UserLoginSchema, db_session: AsyncSession) -> User:
-    stmt = select(User).where(User.email == user_data.email)
-    result = await db_session.execute(stmt)
-    user = result.scalar_one_or_none()
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+    user = get_user(user_data.email, db_session)
     if not verify_password(user_data.password, user.password):
         raise HTTPException(status_code=401, detail="Password is wrong")
     return user
-
-async def set_user_session_redis(redis:redis.Redis, token_pair: TokenPairSchema, user_id: str):
-    key = f"user:{user_id}"
-    value = token_pair.model_dump(exclude=['token_type'])
-    await redis.set(
-        key,
-        json.dumps(value),
-        ex=60 * 60 * 24
-    )
 
 async def get_token_pair(user: User) -> TokenPairSchema:
     now = datetime.now(timezone.utc)
@@ -70,5 +90,14 @@ async def get_token_pair(user: User) -> TokenPairSchema:
 
     token_pair = TokenPairSchema(access_token=access, refresh_token=refresh)
     return token_pair
+
+async def set_user_session_redis(redis:redis.Redis, token_pair: TokenPairSchema, user_email: str):
+    key = f"user:{user_email}"
+    value = token_pair.model_dump(exclude=['token_type'])
+    await redis.set(
+        key,
+        json.dumps(value),
+        ex=settings.JWT_REFRESH_TOKEN_EXPIRE_DAYS
+    )
 
     
