@@ -2,7 +2,7 @@ from pydantic import BaseModel, EmailStr, Field, model_validator
 
 username_pattern = r'^[a-zA-Zа-яА-ЯёЁ0-9_]{3,32}$'
 
-class UserRegister(BaseModel):
+class UserRegisterSchema(BaseModel):
     email: EmailStr = Field(max_length=256, examples=['user@admin.com'])
     password: str = Field(min_length=8, max_length=128, examples=['12345678'])
     confirm_password: str = Field(min_length=8, max_length=128, examples=['12345678'])
@@ -13,11 +13,14 @@ class UserRegister(BaseModel):
             raise ValueError('Passwords don\'t match')
         return self
     
-class LoginForm(BaseModel):
+class UserLoginSchema(BaseModel):
     email: EmailStr | None = Field(max_length=256, examples=['user@admin.com'])
     password: str = Field(min_length=8, max_length=128, examples=['12345678'])
 
-class TokenPair(BaseModel):
+class RefreshTokenSchema(BaseModel):
+    refresh_token: str
+
+class TokenPairSchema(BaseModel):
     access_token: str
     refresh_token: str
     token_type: str = "bearer"

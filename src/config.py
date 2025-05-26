@@ -12,7 +12,6 @@ class Settings(BaseSettings):
     REDIS_HOST: str  
     REDIS_PORT: str  
 
-
     JWT_SECRET: str
     JWT_ALGORITHM: str
     JWT_ACCESS_TOKEN_EXPIRE_MINUTES: int

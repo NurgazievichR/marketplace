@@ -4,8 +4,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from jose import jwt
 from datetime import datetime, timezone, timedelta
+import redis.asyncio as redis
+import json
 
-from src.auth.schemas import UserRegister, LoginForm, TokenPair
+from src.auth.schemas import UserRegisterSchema, UserLoginSchema, TokenPairSchema
 from src.users.models import User
 from src.config import settings
 
@@ -17,14 +19,14 @@ def hash_password(password: str) -> str:
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     return pwd_context.verify(plain_password, hashed_password)
 
-async def create_user(user_data: UserRegister, db_session: AsyncSession) -> User:
+async def create_user(user_data: UserRegisterSchema, db_session: AsyncSession) -> User:
     hashed_password = hash_password(user_data.password)
     user_dict = user_data.model_dump(exclude={'password', 'confirm_password'})
     user: User = User(**user_dict, password=hashed_password)
     await user.save(db_session)
     return user
     
-async def authenticate_user(user_data: LoginForm, db_session: AsyncSession) -> User:
+async def authenticate_user(user_data: UserLoginSchema, db_session: AsyncSession) -> User:
     stmt = select(User).where(User.email == user_data.email)
     result = await db_session.execute(stmt)
     user = result.scalar_one_or_none()
@@ -34,7 +36,16 @@ async def authenticate_user(user_data: LoginForm, db_session: AsyncSession) -> U
         raise HTTPException(status_code=401, detail="Password is wrong")
     return user
 
-def get_token_pair(user: User) -> TokenPair:
+async def set_user_session_redis(redis:redis.Redis, token_pair: TokenPairSchema, user_id: str):
+    key = f"user:{user_id}"
+    value = token_pair.model_dump(exclude=['token_type'])
+    await redis.set(
+        key,
+        json.dumps(value),
+        ex=60 * 60 * 24
+    )
+
+async def get_token_pair(user: User) -> TokenPairSchema:
     now = datetime.now(timezone.utc)
 
     access_payload = {
@@ -57,6 +68,7 @@ def get_token_pair(user: User) -> TokenPair:
     access = jwt.encode(access_payload, **settings.get_auth_data)
     refresh = jwt.encode(refresh_payload, **settings.get_auth_data)
 
-    token_pair = TokenPair(access_token=access, refresh_token=refresh)
+    token_pair = TokenPairSchema(access_token=access, refresh_token=refresh)
     return token_pair
 
+    
