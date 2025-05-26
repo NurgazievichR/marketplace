@@ -20,3 +20,4 @@ class User(Base):
     middle_name: Mapped[str | None] = mapped_column(String(64))
 
 
+    

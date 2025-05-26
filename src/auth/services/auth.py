@@ -24,6 +24,7 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 def get_payload(token: str):
     try:
         payload = jwt.decode(token, settings.JWT_SECRET, algorithms=[settings.JWT_ALGORITHM])
+        return payload
     except ExpiredSignatureError:
         raise HTTPException(status_code=401, detail="Token has expired")
     except JWTClaimsError:
@@ -45,12 +46,13 @@ class AuthBearer(HTTPBearer):
 
         payload = get_payload(token)
 
-async def get_user(id: str, db_session: AsyncSession) -> User:
-    stmt = select(User).where(User.id == id)
+async def get_user(email: str, db_session: AsyncSession) -> User:
+    stmt = select(User).where(User.email == email)
     result = await db_session.execute(stmt)
     user = result.scalar_one_or_none()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
+    return user
 
 async def create_user(user_data: UserRegisterSchema, db_session: AsyncSession) -> User:
     hashed_password = hash_password(user_data.password)
@@ -60,18 +62,18 @@ async def create_user(user_data: UserRegisterSchema, db_session: AsyncSession) -
     return user
 
 async def authenticate_user(user_data: UserLoginSchema, db_session: AsyncSession) -> User:
-    user = get_user(user_data.email, db_session)
+    user = await get_user(user_data.email, db_session)
     if not verify_password(user_data.password, user.password):
         raise HTTPException(status_code=401, detail="Password is wrong")
     return user
 
-async def get_token_pair(user: User) -> TokenPairSchema:
+def get_token_pair(user: User) -> TokenPairSchema:
     now = datetime.now(timezone.utc)
 
     access_payload = {
         'sub': str(user.id),
         'exp': now + timedelta(settings.JWT_ACCESS_TOKEN_EXPIRE_MINUTES),
-        'type': 'access'
+        'type': 'access',
     }
 
     access_exclueded_data = ('password', 'id')
@@ -82,7 +84,8 @@ async def get_token_pair(user: User) -> TokenPairSchema:
     refresh_payload = {
         'sub': str(user.id),
         'exp': now + timedelta(settings.JWT_REFRESH_TOKEN_EXPIRE_DAYS),
-        'type': 'refresh'
+        'type': 'refresh',
+        'email': user.email
     }
 
     access = jwt.encode(access_payload, **settings.get_auth_data)
@@ -97,7 +100,7 @@ async def set_user_session_redis(redis:redis.Redis, token_pair: TokenPairSchema,
     await redis.set(
         key,
         json.dumps(value),
-        ex=settings.JWT_REFRESH_TOKEN_EXPIRE_DAYS
+        ex=settings.JWT_REFRESH_TOKEN_EXPIRE_DAYS * 60 * 60 * 24
     )
 
     

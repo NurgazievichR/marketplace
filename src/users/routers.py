@@ -1,6 +1,7 @@
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, Request, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+import json
 
 from src.database.engine import get_db
 from src.users.models import User
@@ -15,16 +16,20 @@ async def list_users(db_session: AsyncSession = Depends(get_db)):
     return users
 
 @router.get("/redis")
-async def get_all_redis_data(request: Request):
-    redis = request.app.redis 
-    keys = await redis.keys("*")
+async def get_users_from_redis(request: Request):
+    redis = request.app.redis
+    keys = await redis.keys("user:*")
 
     if not keys:
-        return {}
+        raise HTTPException(status_code=404, detail="No user data in Redis")
 
     result = {}
+
     for key in keys:
-        value = await redis.get(key)
-        result[key] = value
+        raw = await redis.get(key)
+        try:
+            result[key] = json.loads(raw)
+        except Exception:
+            result[key] = raw 
 
     return result
