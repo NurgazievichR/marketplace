@@ -6,8 +6,12 @@ from pydantic_settings import BaseSettings
 class Settings(BaseSettings):
     POSTGRES_USER: str 
     POSTGRES_PASSWORD: str 
-    POSTGRES_HOST: str
+    POSTGRES_HOST: str  
     POSTGRES_DB: str
+
+    REDIS_HOST: str  
+    REDIS_PORT: str  
+
 
     JWT_SECRET: str
     JWT_ALGORITHM: str
@@ -20,6 +24,11 @@ class Settings(BaseSettings):
         return (f'postgresql+asyncpg://'
                 f'{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}@'
                 f'{self.POSTGRES_HOST}/{self.POSTGRES_DB}')
+    
+    @computed_field
+    @property
+    def redis_url(self) -> str:
+        return f"redis://{self.REDIS_HOST}:{self.REDIS_PORT}"
     
     @property
     def get_auth_data(self):

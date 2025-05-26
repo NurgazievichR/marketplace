@@ -14,7 +14,7 @@ pwd_context = CryptContext(schemes=['bcrypt'], deprecated='auto')
 def hash_password(password: str) -> str:
     return pwd_context.hash(password)
 
-def verify_password(plain_password: str, hashed_password: str) -> str:
+def verify_password(plain_password: str, hashed_password: str) -> bool:
     return pwd_context.verify(plain_password, hashed_password)
 
 async def create_user(user_data: UserRegister, db_session: AsyncSession) -> User:
@@ -30,6 +30,8 @@ async def authenticate_user(user_data: LoginForm, db_session: AsyncSession) -> U
     user = result.scalar_one_or_none()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
+    if not verify_password(user_data.password, user.password):
+        raise HTTPException(status_code=401, detail="Password is wrong")
     return user
 
 def get_token_pair(user: User) -> TokenPair:
