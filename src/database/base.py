@@ -6,15 +6,17 @@ from sqlalchemy.orm import DeclarativeBase
 
 class Base(DeclarativeBase):
     async def _raise_with_rollback(self, db_session:AsyncSession, e:Exception):
+        if isinstance(e, IntegrityError):
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e.orig)) 
         await db_session.rollback()
-        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,detail=repr(e)) from e
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=repr(e)) 
 
     async def save(self, db_session: AsyncSession):
         try:
             db_session.add(self)
             await db_session.commit()
+            await db_session.refresh(self)
         except SQLAlchemyError as e:
-            print("❌ DB ERROR:", repr(e)) 
             await self._raise_with_rollback(db_session, e)
 
     async def delete(self, db_session: AsyncSession):
@@ -36,8 +38,9 @@ class Base(DeclarativeBase):
         try:
             db_session.add(self)
             await db_session.commit()
+            await db_session.refresh(self)
         except IntegrityError as e:
             await db_session.rollback()
             if isinstance(e.orig, UniqueViolationError):
-                return await db_session.merge(self)
+                await db_session.merge(self)
             raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,detail=repr(e)) from e
