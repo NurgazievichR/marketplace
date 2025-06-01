@@ -5,7 +5,7 @@ username_pattern = r'^[a-zA-Zа-яА-ЯёЁ0-9_]{3,32}$'
 class UserRegisterSchema(BaseModel):
     email: EmailStr = Field(max_length=256, examples=['user@admin.com'])
     password: str = Field(min_length=8, max_length=128, examples=['12345678'])
-    confirm_password: str = Field(min_length=8, max_length=128, examples=['12345678'])
+    confirm_password: str = Field(examples=['12345678'])
 
     @model_validator(mode='after')
     def check_passwords_match(self):

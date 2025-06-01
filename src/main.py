@@ -8,6 +8,8 @@ from src.redis import get_redis
 from src.auth.routers import router as auth_router
 from src.users.routers import router as users_router
 
+from src.database.exceptions import UniqueConstraintViolation, handle_unique_violation
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     try:
@@ -24,4 +26,4 @@ app = FastAPI(title='MarketPlace API', lifespan=lifespan)
 app.include_router(auth_router)
 app.include_router(users_router)
 
-
+app.add_exception_handler(UniqueConstraintViolation, handle_unique_violation)

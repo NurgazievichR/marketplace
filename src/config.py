@@ -14,8 +14,8 @@ class Settings(BaseSettings):
 
     JWT_SECRET: str
     JWT_ALGORITHM: str
-    JWT_ACCESS_TOKEN_EXPIRE_MINUTES: int
-    JWT_REFRESH_TOKEN_EXPIRE_DAYS: int
+    JWT_ACCESS_TOKEN_EXPIRE: int
+    JWT_REFRESH_TOKEN_EXPIRE: int
 
     @computed_field
     @property

@@ -8,7 +8,7 @@ DATABASE_URL = settings.postgres_url
 
 engine = create_async_engine(
     DATABASE_URL,
-    future=True,
+    future=True, # переход на sqlalchemy 2.0
     echo=True,
 )
 
