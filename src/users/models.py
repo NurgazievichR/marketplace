@@ -1,8 +1,11 @@
 import uuid
-from src.database.base import Base
-from sqlalchemy.orm import Mapped, mapped_column
+
 from sqlalchemy import String
 from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.orm import Mapped, mapped_column
+
+from src.database.base import Base
+
 
 class User(Base):
     __tablename__ = 'users'

@@ -2,13 +2,13 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
-from src.database.engine import engine
-from src.redis import get_redis
-
 from src.auth.routers import router as auth_router
+from src.database.engine import engine
+from src.database.exceptions import (UniqueConstraintViolation,
+                                     handle_unique_violation)
+from src.redis import get_redis
 from src.users.routers import router as users_router
 
-from src.database.exceptions import UniqueConstraintViolation, handle_unique_violation
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):

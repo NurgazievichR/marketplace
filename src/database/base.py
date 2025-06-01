@@ -3,7 +3,9 @@ from fastapi import HTTPException, status
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import DeclarativeBase
+
 from src.database.exceptions import UniqueConstraintViolation
+
 
 class Base(DeclarativeBase):
     async def _raise_with_rollback(self, db_session:AsyncSession, e:Exception):

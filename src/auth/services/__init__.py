@@ -1,4 +1,5 @@
-from src.auth.services.auth import hash_password, verify_password, authenticate_user
+from src.auth.services.auth import (authenticate_user, hash_password,
+                                    verify_password)
 from src.auth.services.jwt import get_payload, get_token_pair
 from src.auth.services.redis import set_user_session_redis
 

@@ -3,6 +3,7 @@ from typing import Annotated
 from pydantic import PostgresDsn, computed_field
 from pydantic_settings import BaseSettings
 
+
 class Settings(BaseSettings):
     POSTGRES_USER: str 
     POSTGRES_PASSWORD: str 

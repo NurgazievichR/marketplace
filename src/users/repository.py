@@ -1,8 +1,10 @@
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-from src.users.models import User
-from src.database.engine import AsyncSessionFactory
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from src.auth.services.auth import hash_password
+from src.database.engine import AsyncSessionFactory
+from src.users.models import User
+
 
 class UserRepository:
 

@@ -1,11 +1,14 @@
 from datetime import datetime, timedelta, timezone
 from typing import Any
-from jose.exceptions import ExpiredSignatureError, JWTClaimsError, JWTError
-from src.auth.schemas import TokenPairSchema
-from src.config import settings
+
 from fastapi import HTTPException
 from jose import jwt
+from jose.exceptions import ExpiredSignatureError, JWTClaimsError, JWTError
+
+from src.auth.schemas import TokenPairSchema
+from src.config import settings
 from src.users.models import User
+
 
 def get_payload(token: str) -> dict[str, Any]:
     try:

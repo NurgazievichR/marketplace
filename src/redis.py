@@ -1,6 +1,6 @@
 import redis.asyncio as redis
-
 from src.config import settings
+
 
 async def get_redis() -> redis.Redis:
     return await redis.from_url(

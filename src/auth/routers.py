@@ -1,8 +1,12 @@
-from fastapi import APIRouter, Depends, Request
 from typing import Annotated
+
+from fastapi import APIRouter, Depends, Request
 from sqlalchemy.ext.asyncio import AsyncSession
-from src.auth.schemas import UserRegisterSchema, UserLoginSchema, RefreshTokenSchema, TokenPairSchema
-from src.auth.services import get_token_pair, authenticate_user, set_user_session_redis, get_payload
+
+from src.auth.schemas import (RefreshTokenSchema, TokenPairSchema,
+                              UserLoginSchema, UserRegisterSchema)
+from src.auth.services import (authenticate_user, get_payload, get_token_pair,
+                               set_user_session_redis)
 from src.database.engine import get_db
 from src.users.repository import UserRepository
 

@@ -1,8 +1,9 @@
 import json
-import redis.asyncio as redis
 
+import redis.asyncio as redis
 from src.auth.schemas import TokenPairSchema
 from src.config import settings
+
 
 async def set_user_session_redis(redis:redis.Redis, token_pair: TokenPairSchema, user_email: str):
     key = f"user:{user_email}"
