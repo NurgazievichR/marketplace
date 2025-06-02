@@ -1,7 +1,7 @@
 import uuid
 from typing import Optional
 
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, ConfigDict, EmailStr
 
 
 class UserBaseSchema(BaseModel):
@@ -16,5 +16,4 @@ class UserPublicSchema(UserBaseSchema):
     # is_verified: bool
     # is_approved: bool
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True) #можно заполняться из аттрибуотв объекта, не только словаря

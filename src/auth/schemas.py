@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr, Field, model_validator
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, model_validator
 
 username_pattern = r'^[a-zA-Zа-яА-ЯёЁ0-9_]{3,32}$'
 
@@ -25,11 +25,12 @@ class TokenPairSchema(BaseModel):
     refresh_token: str
     token_type: str = "bearer"
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
-                "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+                "access_token": "eyJhbGciOi...",
                 "refresh_token": "dGhpc2lzYXJlZnJlc2h0b2tlbg==",
                 "token_type": "bearer"
             }
         }
+    )
