@@ -1,5 +1,7 @@
 import pytest
-
+from jose import jwt
+from datetime import datetime, timedelta, timezone
+from src.config import settings
 #REGISTER
 
 @pytest.mark.asyncio
@@ -104,3 +106,44 @@ async def test_login_wrong_password(async_client):
 
     response = await async_client.post("/auth/login", json=payload)
     assert response.status_code == 401
+
+# #REFRESH
+
+@pytest.mark.asyncio
+async def test_refresh_token_success(async_client):
+    payload = {
+        "email": "test_refresh_token_success@mail.com",
+        "password": "12345678",
+        "confirm_password": "12345678"
+    }
+    response = await async_client.post("/auth/register", json=payload)
+    refresh_token = response.json()["refresh_token"]
+
+    response = await async_client.post("/auth/refresh", json={"refresh_token": refresh_token})
+    assert response.status_code == 200
+
+
+@pytest.mark.asyncio
+async def test_refresh_token_errors(async_client):
+    email = "test_refresh_token_errors@mail.com"
+    password = "12345678"
+    now = datetime.now(timezone.utc)
+
+    await async_client.post("/auth/register", json={
+        "email": email,
+        "password": password,
+        "confirm_password": password
+    })
+
+    #Просроченный токен
+    expired_token = jwt.encode(
+        {"email": email, "exp": now - timedelta(minutes=1)},
+        settings.JWT_SECRET,
+        algorithm=settings.JWT_ALGORITHM
+    )
+    resp1 = await async_client.post("/auth/refresh", json={"refresh_token": expired_token})
+    assert resp1.status_code == 401
+
+    #Мусорный токен
+    resp3 = await async_client.post("/auth/refresh", json={"refresh_token": "abracadabra"})
+    assert resp3.status_code == 401

@@ -11,6 +11,8 @@ from src.auth.services import (authenticate_user, get_payload, get_token_pair,
 from src.database.engine import get_db
 from src.users.repository import UserRepository
 
+from jose.exceptions import JWTClaimsError
+
 router = APIRouter(prefix='/auth', tags=['Авторизация'])
 
 @router.post('/register', summary='Регистрация')
@@ -33,7 +35,7 @@ async def login(request: Request, user_in: UserLoginSchema, db_session: Annotate
 @router.post('/refresh', summary='Получить refresh token')
 async def refresh(request: Request, refresh_token: RefreshTokenSchema, db_session: Annotated[AsyncSession, Depends(get_db)]) -> TokenPairSchema:
     payload = get_payload(refresh_token.refresh_token)
-    user = await UserRepository.get_by_email(payload['email'], db_session)
+    user = await UserRepository.get_by_uuid(payload['sub'], db_session)
     token_pair = get_token_pair(user)
     await set_user_session_redis(request.app.redis, token_pair, user.email)
     return token_pair
