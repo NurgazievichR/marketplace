@@ -1,12 +1,15 @@
 import pytest
 
+#REGISTER
+
 @pytest.mark.asyncio
 async def test_register_success(async_client):
-    response = await async_client.post("/auth/register", json={
+    payload = {
         "email": "test_register_success@mail.com",
         "password": "12345678",
         "confirm_password": "12345678"
-    })
+    }
+    response = await async_client.post("/auth/register", json=payload)
     assert response.status_code == 200
 
 @pytest.mark.asyncio
@@ -61,3 +64,43 @@ async def test_register_validation_errors(async_client):
     long_password_user["confirm_password"] = long_password
     response = await async_client.post("/auth/register", json=long_password_user)
     assert response.status_code == 422
+
+#LOGIN
+
+@pytest.mark.asyncio
+async def test_login_success(async_client):
+    payload = {
+        "email": "test_login_success@mail.com",
+        "password": "12345678",
+        "confirm_password": "12345678"
+    }
+    await async_client.post("/auth/register", json=payload)
+
+    payload.pop('confirm_password', None)
+    response = await async_client.post('/auth/login', json=payload)
+    assert response.status_code == 200
+
+@pytest.mark.asyncio
+async def test_login_user_not_found(async_client):
+    payload = {
+        "email": "test_login_user_not_found@mail.com",
+        "password": "12345678"
+    }
+
+    response = await async_client.post("/auth/login", json=payload)
+    assert response.status_code == 404
+
+@pytest.mark.asyncio
+async def test_login_wrong_password(async_client):
+    payload = {
+        "email": "test_login_wrong_password@mail.com",
+        "password": "12345678",
+        "confirm_password": "12345678"
+    }
+    await async_client.post("/auth/register", json=payload)
+
+    payload["password"] = "wrongpassword"
+    payload.pop("confirm_password", None)
+
+    response = await async_client.post("/auth/login", json=payload)
+    assert response.status_code == 401

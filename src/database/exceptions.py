@@ -4,7 +4,6 @@ from fastapi import Request
 from fastapi.responses import JSONResponse
 from sqlalchemy.exc import IntegrityError
 
-
 class UniqueConstraintViolation(Exception):
     def __init__(self, exc: IntegrityError, status_code: int = 409):
         self.status_code = status_code

@@ -1,7 +1,7 @@
 import json
 
 from fastapi import APIRouter, Depends, HTTPException, Request
-from sqlalchemy import select
+from sqlalchemy import select, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.database.engine import get_db
@@ -15,6 +15,16 @@ async def list_users(db_session: AsyncSession = Depends(get_db)):
     result = await db_session.execute(select(User))
     users = result.scalars().all()
     return users
+
+@router.delete("/")
+async def clear_users_table(db_session: AsyncSession = Depends(get_db)):
+    try:
+        await db_session.execute(delete(User))
+        await db_session.commit()
+        return {"detail": "User table cleared."}
+    except Exception as e:
+        await db_session.rollback()
+        raise HTTPException(status_code=500, detail=f"Failed to clear users: {str(e)}")
 
 @router.get("/redis")
 async def get_users_from_redis(request: Request):

@@ -3,6 +3,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.auth.exceptions import UserNotFoundError
 from src.auth.schemas import (RefreshTokenSchema, TokenPairSchema,
                               UserLoginSchema, UserRegisterSchema)
 from src.auth.services import (authenticate_user, get_payload, get_token_pair,
@@ -21,8 +22,10 @@ async def register(request: Request, user_data: UserRegisterSchema, db_session: 
 
 @router.post('/login', summary='Логин')
 async def login(request: Request, user_in: UserLoginSchema, db_session: Annotated[AsyncSession, Depends(get_db)]) -> TokenPairSchema:
-    user = UserRepository.get_by_email(user_in.email, db_session)
-    await authenticate_user(user_in, user)
+    user = await UserRepository.get_by_email(user_in.email, db_session)
+    if not user:
+        raise UserNotFoundError(user_in.email)
+    authenticate_user(user_in, user)
     token_pair = get_token_pair(user)
     await set_user_session_redis(request.app.redis, token_pair, user.email)
     return token_pair

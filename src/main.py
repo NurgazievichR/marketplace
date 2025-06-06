@@ -4,6 +4,7 @@ import asyncio
 from fastapi import FastAPI
 
 from src.auth.routers import router as auth_router
+from src.auth.exceptions import UserNotFoundError, handle_user_not_found
 from src.database.engine import engine
 from src.database.exceptions import (UniqueConstraintViolation,
                                      handle_unique_violation)
@@ -29,3 +30,4 @@ app.include_router(auth_router)
 app.include_router(users_router)
 
 app.add_exception_handler(UniqueConstraintViolation, handle_unique_violation)
+app.add_exception_handler(UserNotFoundError, handle_user_not_found)
