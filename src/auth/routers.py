@@ -16,7 +16,7 @@ router = APIRouter(prefix='/auth', tags=['Авторизация'])
 async def register(request: Request, user_data: UserRegisterSchema, db_session: Annotated[AsyncSession, Depends(get_db)]) -> TokenPairSchema:
     user = await UserRepository.create(**user_data.model_dump(exclude=['confirm_password']), db=db_session)
     token_pair = get_token_pair(user)
-    # await set_user_session_redis(request.app.redis, token_pair, user.email)
+    await set_user_session_redis(request.app.redis, token_pair, user.email)
     return token_pair
 
 @router.post('/login', summary='Логин')

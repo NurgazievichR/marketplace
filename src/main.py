@@ -1,4 +1,5 @@
 from contextlib import asynccontextmanager
+import asyncio
 
 from fastapi import FastAPI
 
@@ -8,18 +9,19 @@ from src.database.exceptions import (UniqueConstraintViolation,
                                      handle_unique_violation)
 from src.redis import get_redis
 from src.users.routers import router as users_router
+from src.config import settings
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     try:
-        app.redis = await get_redis()
+        app.redis = await get_redis(settings.redis_url)
         async with engine.begin() as conn:
             await conn.run_sync(lambda _: None) 
         yield  
     finally:
         await engine.dispose()
-        await app.redis.close()
+        await app.redis.aclose()
 
 
 app = FastAPI(title='MarketPlace API', lifespan=lifespan)

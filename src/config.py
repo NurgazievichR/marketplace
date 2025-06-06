@@ -30,11 +30,14 @@ class Settings(BaseSettings):
     def postgres_url_test(self) -> Annotated[PostgresDsn, 'DSN']:
         return self.postgres_url + '_test'
     
-    
     @computed_field
     @property
     def redis_url(self) -> str:
         return f"redis://{self.REDIS_HOST}:{self.REDIS_PORT}"
+    
+    @property
+    def redis_url_test(self) -> str:
+        return f"redis://{self.REDIS_HOST}:{self.REDIS_PORT}/1"
     
     @property
     def get_auth_data(self):

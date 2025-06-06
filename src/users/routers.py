@@ -34,3 +34,9 @@ async def get_users_from_redis(request: Request):
             result[key] = raw 
 
     return result
+
+@router.delete("/redis")
+async def clear_redis(request: Request):
+    redis = request.app.redis
+    await redis.flushdb()
+    return {"detail": "Redis database cleared."}

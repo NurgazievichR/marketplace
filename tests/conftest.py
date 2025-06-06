@@ -8,9 +8,9 @@ from sqlalchemy.pool import NullPool
 
 from src.config import settings
 from src.database.base import Base
-from src.database.engine import get_db
 from src.database.engine import get_db as original_get_db
 from src.main import app
+from src.redis import get_redis
 
 TEST_DB_URL = settings.postgres_url_test
 
@@ -29,8 +29,10 @@ async def prepare_test_db():
         await conn.run_sync(Base.metadata.drop_all)
         await conn.run_sync(Base.metadata.create_all)
 
-@pytest_asyncio.fixture
+@pytest_asyncio.fixture()
 async def async_client() -> AsyncGenerator[AsyncClient, None]:
+    app.redis = await get_redis(settings.redis_url_test)
     transport = ASGITransport(app=app) 
     async with AsyncClient(transport=transport, base_url="http://test") as client:
         yield client
+
